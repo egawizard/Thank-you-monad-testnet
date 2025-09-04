@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monad Inscriptions - Write Messages on Blockchain</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .wallet-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .wallet-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .wallet-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .wallet-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .connected-wallet {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .message-section {
+            margin-bottom: 30px;
+        }
+
+        .message-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .message-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+            backdrop-filter: blur(5px);
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .char-count {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .inscribe-button {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .inscribe-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .inscribe-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4CAF50;
+        }
+
+        .status-error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            color: #FFC107;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card h3 {
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+
+        .info-label {
+            opacity: 0.8;
+        }
+
+        .info-value {
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        .footer a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Monad Inscriptions</h1>
+            <p>Write your message permanently on the Monad blockchain</p>
+        </div>
+
+        <div class="main-card">
+            <div class="wallet-section">
+                <button id="connectWallet" class="wallet-button">Connect Wallet</button>
+                <div id="walletInfo" class="connected-wallet" style="display: none;"></div>
+            </div>
+
+            <div class="message-section">
+                <label for="messageInput">Your Message:</label>
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Write your message that will be permanently stored on the Monad blockchain..."
+                    maxlength="500"
+                ></textarea>
+                <div class="char-count">
+                    <span id="charCount">0</span>/500 characters
+                </div>
+            </div>
+
+            <button id="inscribeButton" class="inscribe-button" disabled>
+                Inscribe Message on Blockchain
+            </button>
+
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+        </div>
+
+        <div class="info-card">
+            <h3>Network Information</h3>
+            <div class="info-item">
+                <span class="info-label">Network:</span>
+                <span class="info-value">Monad Testnet</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Chain ID:</span>
+                <span class="info-value">10143</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">RPC URL:</span>
+                <span class="info-value">https://testnet-rpc.monad.xyz</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Created by <a href="https://x.com/ega_2ez4crypto" target="_blank">@ega_2ez4crypto</a></p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <script>
+        class MonadInscription {
+            constructor() {
+                this.provider = null;
+                this.signer = null;
+                this.userAccount = null;
+                this.chainId = 10143;
+                this.rpcUrl = 'https://testnet-rpc.monad.xyz';
+                
+                this.initializeElements();
+                this.attachEventListeners();
+                this.checkWalletConnection();
+            }
+
+            initializeElements() {
+                this.connectWalletBtn = document.getElementById('connectWallet');
+                this.walletInfo = document.getElementById('walletInfo');
+                this.messageInput = document.getElementById('messageInput');
+                this.charCount = document.getElementById('charCount');
+                this.inscribeButton = document.getElementById('inscribeButton');
+                this.statusMessage = document.getElementById('statusMessage');
+            }
+
+            attachEventListeners() {
+                this.connectWalletBtn.addEventListener('click', () => this.connectWallet());
+                this.inscribeButton.addEventListener('click', () => this.inscribeMessage());
+                this.messageInput.addEventListener('input', () => this.updateCharCount());
+            }
+
+            async checkWalletConnection() {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (accounts.length > 0) {
+                            await this.setupProvider();
+                        }
+                    } catch (error) {
+                        console.error('Error checking wallet connection:', error);
+                    }
+                }
+            }
+
+            async connectWallet() {
+                if (typeof window.ethereum === 'undefined') {
+                    this.showStatus('Please install MetaMask or another Web3 wallet', 'error');
+                    return;
+                }
+
+                try {
+                    this.connectWalletBtn.disabled = true;
+                    this.connectWalletBtn.innerHTML = '<div class="loading"></div>Connecting...';
+
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    await this.setupProvider();
+                    
+                } catch (error) {
+                    console.error('Wallet connection error:', error);
+                    this.showStatus('Failed to connect wallet: ' + error.message, 'error');
+                } finally {
+                    this.connectWalletBtn.disabled = false;
+                    this.connectWalletBtn.textContent = 'Connect Wallet';
+                }
+            }
+
+            async setupProvider() {
+                try {
+                    this.provider = new ethers.BrowserProvider(window.ethereum);
+                    this.signer = await this.provider.getSigner();
+                    this.userAccount = await this.signer.getAddress();
+
+                    // Check if we're on the correct network
+                    const network = await this.provider.getNetwork();
+                    if (network.chainId !== BigInt(this.chainId)) {
+                        await this.switchNetwork();
+                    }
+
+                    this.updateWalletUI();
+                    this.showStatus('Wallet connected successfully!', 'success');
+                    
+                } catch (error) {
+                    console.error('Setup provider error:', error);
+                    this.showStatus('Error setting up wallet connection', 'error');
+                }
+            }
+
+            async switchNetwork() {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: `0x${this.chainId.toString(16)}` }],
+                    });
+                } catch (switchError) {
+                    // Network not added, try to add it
+                    if (switchError.code === 4902) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: `0x${this.chainId.toString(16)}`,
+                                    chainName: 'Monad Testnet',
+                                    nativeCurrency: {
+                                        name: 'MON',
+                                        symbol: 'MON',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: [this.rpcUrl],
+                                    blockExplorerUrls: ['https://testnet-explorer.monad.xyz']
+                                }]
+                            });
+                        } catch (addError) {
+                            console.error('Error adding network:', addError);
+                            throw addError;
+                        }
+                    } else {
+                        throw switchError;
+                    }
+                }
+            }
+
+            updateWalletUI() {
+                if (this.userAccount) {
+                    this.connectWalletBtn.style.display = 'none';
+                    this.walletInfo.style.display = 'block';
+                    this.walletInfo.textContent = `Connected: ${this.userAccount.slice(0, 6)}...${this.userAccount.slice(-4)}`;
+                    this.inscribeButton.disabled = this.messageInput.value.trim() === '';
+                } else {
+                    this.connectWalletBtn.style.display = 'inline-block';
+                    this.walletInfo.style.display = 'none';
+                    this.inscribeButton.disabled = true;
+                }
+            }
+
+            updateCharCount() {
+                const count = this.messageInput.value.length;
+                this.charCount.textContent = count;
+                this.inscribeButton.disabled = !this.userAccount || this.messageInput.value.trim() === '';
+            }
+
+            async inscribeMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message) {
+                    this.showStatus('Please enter a message', 'error');
+                    return;
+                }
+
+                if (!this.signer) {
+                    this.showStatus('Please connect your wallet first', 'error');
+                    return;
+                }
+
+                try {
+                    this.inscribeButton.disabled = true;
+                    this.inscribeButton.innerHTML = '<div class="loading"></div>Inscribing...';
+                    
+                    // Convert message to hex data
+                    const messageHex = ethers.toUtf8Bytes(message);
+                    
+                    // Create transaction to store message on blockchain
+                    const tx = await this.signer.sendTransaction({
+                        to: this.userAccount, // Send to self
+                        value: 0,
+                        data: ethers.hexlify(messageHex)
+                    });
+
+                    this.showStatus(`Transaction sent! Hash: ${tx.hash}`, 'pending');
+                    
+                    // Wait for confirmation
+                    const receipt = await tx.wait();
+                    
+                    this.showStatus(
+                        `Message successfully inscribed! Transaction: ${receipt.hash}`, 
+                        'success'
+                    );
+                    
+                    // Clear the message input
+                    this.messageInput.value = '';
+                    this.updateCharCount();
+                    
+                } catch (error) {
+                    console.error('Inscription error:', error);
+                    let errorMessage = 'Failed to inscribe message';
+                    if (error.code === 'INSUFFICIENT_FUNDS') {
+                        errorMessage = 'Insufficient funds for gas fee';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    this.showStatus(errorMessage, 'error');
+                } finally {
+                    this.inscribeButton.disabled = false;
+                    this.inscribeButton.textContent = 'Inscribe Message on Blockchain';
+                }
+            }
+
+            showStatus(message, type) {
+                this.statusMessage.textContent = message;
+                this.statusMessage.className = `status-message status-${type}`;
+                this.statusMessage.style.display = 'block';
+
+                if (type === 'success' || type === 'error') {
+                    setTimeout(() => {
+                        this.statusMessage.style.display = 'none';
+                    }, 10000);
+                }
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new MonadInscription();
+        });
+    </script>
+</body>
+</html>
